@@ -1,0 +1,30 @@
+[Unit]
+Description=Beacon Messenger Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=beacon
+WorkingDirectory=/opt/beacon
+ExecStart=/opt/beacon/venv/bin/python /opt/beacon/server.py
+Restart=always
+RestartSec=5
+
+# Переменные окружения
+# Скопируй файл сервисного аккаунта Firebase и укажи путь:
+Environment=GOOGLE_APPLICATION_CREDENTIALS=/opt/beacon/firebase-adminsdk.json
+# При необходимости добавь другие переменные:
+# Environment=BEACON_PORT=8765
+
+# Логи
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=beacon-server
+
+# Безопасность (ограничения для процесса)
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

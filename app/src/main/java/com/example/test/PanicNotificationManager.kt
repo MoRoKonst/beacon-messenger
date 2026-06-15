@@ -1,0 +1,86 @@
+package com.bcon.messenger
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+
+/**
+ * Постоянное уведомление «Паника» на lock screen.
+ *
+ * Уведомление видно без разблокировки экрана (VISIBILITY_PUBLIC).
+ * Кнопка в уведомлении — единственное действие, нажатие сразу
+ * запускает HARD-вайп через WipeReceiver.
+ *
+ * Жизненный цикл:
+ *   show()    — вызывать после успешного входа в приложение
+ *   dismiss() — вызывать при wipe / logout
+ */
+object PanicNotificationManager {
+
+    const val ACTION_EMERGENCY_WIPE = "com.bcon.messenger.EMERGENCY_WIPE"
+
+    private const val CHANNEL_ID = "panic_button"
+    private const val NOTIF_ID   = 9998
+    private const val REQ_CODE   = 9200
+
+    /** Показать уведомление, если функция включена в настройках. */
+    fun show(context: Context) {
+        if (!UserStorage.getPanicButtonEnabled(context)) return
+        ensureChannel(context)
+
+        val s = strings(context)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_menu_delete)
+            .setContentTitle(s.panicNotifTitle)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)  // видно на lock screen
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setOngoing(true)       // нельзя смахнуть
+            .setAutoCancel(false)
+            .addAction(0, s.panicNotifButton, makeWipePendingIntent(context))
+            .build()
+
+        try {
+            NotificationManagerCompat.from(context).notify(NOTIF_ID, notification)
+        } catch (_: SecurityException) {}
+    }
+
+    /** Скрыть уведомление (при wipe / logout). */
+    fun dismiss(context: Context) {
+        NotificationManagerCompat.from(context).cancel(NOTIF_ID)
+    }
+
+    // ── Internal ──────────────────────────────────────────────────────────────
+
+    private fun makeWipePendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, WipeReceiver::class.java).apply {
+            action = ACTION_EMERGENCY_WIPE
+        }
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+        return PendingIntent.getBroadcast(context, REQ_CODE, intent, flags)
+    }
+
+    private fun strings(context: Context): AppStrings =
+        if (UserStorage.getLanguage(context) == "en") enStrings else ruStrings
+
+    private fun ensureChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val s = strings(context)
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                s.panicNotifTitle,
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = s.panicNotifText
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+            }
+            context.getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(channel)
+        }
+    }
+}

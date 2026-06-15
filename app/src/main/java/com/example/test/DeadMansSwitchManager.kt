@@ -1,0 +1,156 @@
+package com.bcon.messenger
+
+import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+
+object DeadMansSwitchManager {
+
+    const val ACTION_DMS_FIRE    = "com.bcon.messenger.DMS_FIRE"
+    const val ACTION_DMS_WIPE    = "com.bcon.messenger.DMS_WIPE"
+    const val ACTION_DMS_CHECKIN = "com.bcon.messenger.DMS_CHECKIN"
+
+    private const val NOTIF_CHANNEL_ID  = "dms_alert"
+    private const val NOTIF_WARNING_ID  = 9001
+    private const val REQ_FIRE          = 9100
+    private const val REQ_WIPE          = 9101
+    private const val REQ_CHECKIN       = 9102
+    const val GRACE_PERIOD_MS           = 15 * 60 * 1000L  // 15 минут
+
+    // ── Публичный API ─────────────────────────────────────────────────────────
+
+    fun enable(context: Context, intervalHours: Int) {
+        UserStorage.setDmsEnabled(context, true)
+        UserStorage.setDmsIntervalHours(context, intervalHours)
+        checkIn(context)  // сбросить таймер и запланировать первый алерт
+    }
+
+    fun disable(context: Context) {
+        UserStorage.setDmsEnabled(context, false)
+        cancelAlarms(context)
+        dismissWarningNotification(context)
+    }
+
+    fun isEnabled(context: Context): Boolean = UserStorage.getDmsEnabled(context)
+
+    fun getIntervalHours(context: Context): Int = UserStorage.getDmsIntervalHours(context)
+
+    fun getTimeRemainingMs(context: Context): Long {
+        val lastCheckin = UserStorage.getDmsLastCheckin(context)
+        if (lastCheckin == 0L) return 0L
+        val intervalMs = UserStorage.getDmsIntervalHours(context) * 3_600_000L
+        val elapsed = System.currentTimeMillis() - lastCheckin
+        return (intervalMs - elapsed).coerceAtLeast(0L)
+    }
+
+    /** Пользователь подтвердил безопасность — сбросить таймер. */
+    fun checkIn(context: Context) {
+        val now = System.currentTimeMillis()
+        UserStorage.setDmsLastCheckin(context, now)
+        cancelAlarms(context)
+        dismissWarningNotification(context)
+        if (isEnabled(context)) {
+            scheduleFireAlarm(context)
+        }
+    }
+
+    /** Немедленно показать предупреждение (для триггера таймаута пароля). */
+    fun triggerWarningImmediate(context: Context) {
+        showWarningNotification(context)
+        scheduleWipeAlarm(context, GRACE_PERIOD_MS)
+    }
+
+    // ── AlarmManager ──────────────────────────────────────────────────────────
+
+    fun scheduleFireAlarm(context: Context) {
+        val triggerAt = UserStorage.getDmsLastCheckin(context) +
+                UserStorage.getDmsIntervalHours(context) * 3_600_000L
+        val intent = makePendingIntent(context, ACTION_DMS_FIRE, REQ_FIRE)
+        scheduleExact(context, triggerAt, intent)
+    }
+
+    fun scheduleWipeAlarm(context: Context, delayMs: Long = GRACE_PERIOD_MS) {
+        val triggerAt = System.currentTimeMillis() + delayMs
+        val intent = makePendingIntent(context, ACTION_DMS_WIPE, REQ_WIPE)
+        scheduleExact(context, triggerAt, intent)
+    }
+
+    private fun scheduleExact(context: Context, triggerAt: Long, intent: PendingIntent) {
+        val am = getAlarmManager(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) {
+            // Разрешение не выдано — используем менее точный но безопасный вариант
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, intent)
+        } else {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, intent)
+        }
+    }
+
+    fun cancelAlarms(context: Context) {
+        getAlarmManager(context).cancel(makePendingIntent(context, ACTION_DMS_FIRE, REQ_FIRE))
+        getAlarmManager(context).cancel(makePendingIntent(context, ACTION_DMS_WIPE, REQ_WIPE))
+    }
+
+    // ── Уведомления ───────────────────────────────────────────────────────────
+
+    fun showWarningNotification(context: Context) {
+        ensureChannel(context)
+
+        val checkinIntent = makePendingIntent(context, ACTION_DMS_CHECKIN, REQ_CHECKIN)
+
+        val s = strings(context)
+        val notification = NotificationCompat.Builder(context, NOTIF_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle(s.dmsNotifTitle)
+            .setContentText(s.dmsNotifText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(s.dmsNotifGraceText))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .addAction(0, s.dmsCheckinBtn, checkinIntent)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(context).notify(NOTIF_WARNING_ID, notification)
+        } catch (_: SecurityException) {}
+    }
+
+    fun dismissWarningNotification(context: Context) {
+        NotificationManagerCompat.from(context).cancel(NOTIF_WARNING_ID)
+    }
+
+    // ── Вспомогательные ───────────────────────────────────────────────────────
+
+    /** Получить строки для языка пользователя вне Compose-контекста. */
+    private fun strings(context: Context): AppStrings =
+        if (UserStorage.getLanguage(context) == "en") enStrings else ruStrings
+
+    private fun getAlarmManager(context: Context): AlarmManager =
+        context.getSystemService(AlarmManager::class.java)
+
+    private fun makePendingIntent(context: Context, action: String, reqCode: Int): PendingIntent {
+        val intent = Intent(context, WipeReceiver::class.java).apply { this.action = action }
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
+        return PendingIntent.getBroadcast(context, reqCode, intent, flags)
+    }
+
+    private fun ensureChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val s = strings(context)
+            val channel = NotificationChannel(
+                NOTIF_CHANNEL_ID,
+                s.dmsNotifTitle,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply { description = s.dmsSubtitle }
+            context.getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(channel)
+        }
+    }
+}

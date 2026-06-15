@@ -1,0 +1,25 @@
+# Cloudflare Workers — конфиг для деплоя через wrangler CLI
+#
+# Установка wrangler:
+#   npm install -g wrangler
+#
+# Деплой:
+#   wrangler login
+#   wrangler deploy
+#
+# Переменные (задаются в Cloudflare Dashboard → Worker → Settings → Variables):
+#   BACKEND_HOST — домен/IP твоего сервера (например: beacon.example.com)
+#   BACKEND_PORT — порт (обычно 9000, или 443 если за nginx/Cloudflare Tunnel)
+
+name = "beacon-proxy"
+main = "cloudflare-worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+BACKEND_HOST = "your-real-server.com"
+BACKEND_PORT = "9000"
+
+# Кастомный домен (опционально — настрой в Dashboard)
+# [[routes]]
+# pattern = "beacon.yourdomain.com/*"
+# zone_name = "yourdomain.com"

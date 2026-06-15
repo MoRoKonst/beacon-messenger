@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Calculator body -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:pathData="M22,16 L86,16 Q94,16 94,24 L94,84 Q94,92 86,92 L22,92 Q14,92 14,84 L14,24 Q14,16 22,16 Z"/>
+
+    <!-- Display area -->
+    <path
+        android:fillColor="#263238"
+        android:pathData="M20,22 L88,22 L88,44 L20,44 Z"/>
+
+    <!-- Display number "24" hint -->
+    <path
+        android:fillColor="#80CBC4"
+        android:pathData="M55,32 L62,32 Q63,32 63,33 L63,38 Q63,39 62,39 L55,39 Q54,39 54,38 L54,33 Q54,32 55,32 Z"/>
+    <path
+        android:fillColor="#80CBC4"
+        android:pathData="M66,32 L73,32 Q74,32 74,33 L74,38 Q74,39 73,39 L66,39 Q65,39 65,38 L65,33 Q65,32 66,32 Z"/>
+
+    <!-- Row 1 buttons -->
+    <path android:fillColor="#B0BEC5"
+        android:pathData="M20,50 L30,50 Q31,50 31,51 L31,58 Q31,59 30,59 L20,59 Q19,59 19,58 L19,51 Q19,50 20,50 Z"/>
+    <path android:fillColor="#B0BEC5"
+        android:pathData="M33,50 L43,50 Q44,50 44,51 L44,58 Q44,59 43,59 L33,59 Q32,59 32,58 L32,51 Q32,50 33,50 Z"/>
+    <path android:fillColor="#B0BEC5"
+        android:pathData="M46,50 L56,50 Q57,50 57,51 L57,58 Q57,59 56,59 L46,59 Q45,59 45,58 L45,51 Q45,50 46,50 Z"/>
+    <path android:fillColor="#FF7043"
+        android:pathData="M59,50 L88,50 Q89,50 89,51 L89,58 Q89,59 88,59 L59,59 Q58,59 58,58 L58,51 Q58,50 59,50 Z"/>
+
+    <!-- Row 2 buttons -->
+    <path android:fillColor="#546E7A"
+        android:pathData="M19,62 L30,62 Q31,62 31,63 L31,70 Q31,71 30,71 L19,71 Q18,71 18,70 L18,63 Q18,62 19,62 Z"/>
+    <path android:fillColor="#546E7A"
+        android:pathData="M33,62 L44,62 Q45,62 45,63 L45,70 Q45,71 44,71 L33,71 Q32,71 32,70 L32,63 Q32,62 33,62 Z"/>
+    <path android:fillColor="#546E7A"
+        android:pathData="M47,62 L58,62 Q59,62 59,63 L59,70 Q59,71 58,71 L47,71 Q46,71 46,70 L46,63 Q46,62 47,62 Z"/>
+    <path android:fillColor="#FF7043"
+        android:pathData="M61,62 L71,62 Q72,62 72,63 L72,70 Q72,71 71,71 L61,71 Q60,71 60,70 L60,63 Q60,62 61,62 Z"/>
+
+    <!-- Row 3 buttons -->
+    <path android:fillColor="#546E7A"
+        android:pathData="M19,74 L30,74 Q31,74 31,75 L31,82 Q31,83 30,83 L19,83 Q18,83 18,82 L18,75 Q18,74 19,74 Z"/>
+    <path android:fillColor="#546E7A"
+        android:pathData="M33,74 L44,74 Q45,74 45,75 L45,82 Q45,83 44,83 L33,83 Q32,83 32,82 L32,75 Q32,74 33,74 Z"/>
+    <path android:fillColor="#546E7A"
+        android:pathData="M47,74 L58,74 Q59,74 59,75 L59,82 Q59,83 58,83 L47,83 Q46,83 46,82 L46,75 Q46,74 47,74 Z"/>
+    <path android:fillColor="#4FC3F7"
+        android:pathData="M61,74 L71,74 Q72,74 72,75 L72,82 Q72,83 71,83 L61,83 Q60,83 60,82 L60,75 Q60,74 61,74 Z"/>
+
+</vector>

@@ -1,0 +1,54 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Claude Code рабочая папка
+.claude/
+
+# Секреты — никогда не публиковать
+*.jks
+*.keystore
+*firebase-adminsdk*.json
+ForEXP/valid_invites.json
+ForEXP/*.json
+
+# База данных аналитики
+*.db
+*.db-shm
+*.db-wal
+
+# Переменные окружения (шаблон .env.example публикуется — он нужен пользователям)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Firebase Client Config (содержит API ключ — каждый деплоит с своим Firebase)
+app/google-services.json
+
+# Скомпилированные APK (публикуются через GitHub Releases, не через git)
+app/release/
+
+# TLS-сертификаты и приватные ключи сервера
+*.pem
+*.key
+ForEXP/.key
+
+# Установщики и дистрибутивы (не должны быть в репозитории)
+*.exe
+*.exe.*
+*.part
+ForEXP/gradle-*/
+ForEXP/android-studio*/

@@ -1,0 +1,24 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Круговая стрелка 270° по часовой стрелке: правая сторона → низ → левая → верх -->
+    <path
+        android:pathData="M 20 12 A 8 8 0 1 1 12 4"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"/>
+
+    <!-- Наконечник в точке (12,4), направление — вправо (по ходу дуги) -->
+    <path
+        android:pathData="M 9 7 L 12 4 L 15 7"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+</vector>

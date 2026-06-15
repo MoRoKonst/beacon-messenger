@@ -1,0 +1,17 @@
+services:
+  beacon:
+    build: ./ForEXP
+    restart: unless-stopped
+    ports:
+      # Слушаем только на localhost — nginx проксирует снаружи через WSS
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - beacon_data:/data
+    environment:
+      DB_PATH: /data/messages.db
+      CHANNEL_ADMIN_SECRET: ${CHANNEL_ADMIN_SECRET}
+      FEDERATION_SECRET: ${FEDERATION_SECRET:-}
+      FEDERATION_PEERS: ${FEDERATION_PEERS:-}
+
+volumes:
+  beacon_data:
