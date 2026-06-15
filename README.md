@@ -9,8 +9,8 @@ A privacy-focused end-to-end encrypted messenger for Android with advanced anti-
 - [Overview](#overview)
 - [Features](#features)
 - [Requirements](#requirements)
+- [Self-Hosting](#self-hosting)
 - [Build Instructions](#build-instructions)
-- [Server Deployment](#server-deployment)
 - [Quick Start](#quick-start)
 - [Security Overview](#security-overview)
 - [Documentation](#documentation)
@@ -102,6 +102,68 @@ Beacon is a self-hosted encrypted messenger. All user data is protected by end-t
 
 ---
 
+## Self-Hosting
+
+You can run your own Beacon server and connect the app to it — no recompilation needed.
+
+### 1. Deploy the server
+
+**With Docker (recommended):**
+
+```bash
+git clone https://github.com/MoRoKonst/beacon-messenger
+cd beacon-messenger
+cp ForEXP/.env.example .env
+```
+
+Edit `.env` and set `CHANNEL_ADMIN_SECRET` to a random secret:
+
+```bash
+# Generate a secret:
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+```bash
+docker compose up -d
+```
+
+The server listens on `127.0.0.1:9000` by default.
+
+**Without Docker:**
+
+```bash
+cd ForEXP
+pip install websockets cryptography
+export CHANNEL_ADMIN_SECRET="your-secret-here"
+python server.py --dev
+```
+
+### 2. Configure nginx (reverse proxy + TLS)
+
+Add to your nginx site config:
+
+```nginx
+location /ws {
+    proxy_pass http://127.0.0.1:9000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 86400;
+}
+```
+
+### 3. Connect the app to your server
+
+No rebuild required. In the app:
+
+1. Go to **Profile → Servers**
+2. Tap **+** to add a server
+3. Enter your server hostname and port (default: 9000)
+4. Tap the server to switch to it — the app reconnects immediately
+
+---
+
 ## Build Instructions
 
 ### Prerequisites
@@ -112,8 +174,8 @@ Beacon is a self-hosted encrypted messenger. All user data is protected by end-t
 ### Steps
 
 ```bash
-# Clone or extract the project
-cd TEST2
+# Clone the project
+cd beacon-messenger
 
 # Build debug APK
 ./gradlew assembleDebug
@@ -143,48 +205,18 @@ signingConfigs {
 
 ---
 
-## Server Deployment
-
-```bash
-cd ForEXP
-
-# Install dependencies
-pip install websockets cryptography
-
-# Set environment variables
-export CHANNEL_ADMIN_SECRET="your-secret-here"
-export PORT=8765                          # optional, default 8765
-
-# Run
-python server.py
-```
-
-### With TLS (recommended for production)
-
-Place the server behind a reverse proxy (nginx, Caddy) that terminates TLS and forwards WebSocket connections. Alternatively, pass the SSL context directly in `server.py`.
-
-### TURN Server (coturn)
-
-Required for WebRTC calls through NAT:
-
-```
-listening-ip=<SERVER_IP>
-relay-ip=<SERVER_IP>
-listening-port=4433
-lt-cred-mech
-user=<USERNAME>:<PASSWORD>
-realm=beacon
-```
-
----
-
 ## Quick Start
 
-1. Deploy the server and configure the hostname in `NetworkConfig.kt`.
-2. Build and install the APK.
-3. Open the app and register a username and password.
-4. Share your invite code with a contact (`beacon://invite?...`).
-5. When your contact adds you, start a conversation.
+**Using the public server (beacon-app.org):**
+
+1. Install the APK from [Releases](https://github.com/MoRoKonst/beacon-messenger/releases).
+2. Open the app and register a username and password.
+3. Share your invite code with a contact (`beacon://invite?...`).
+4. When your contact adds you, start a conversation.
+
+**Using your own server:**
+
+See [Self-Hosting](#self-hosting) above, then add your server in **Profile → Servers**.
 
 ---
 
